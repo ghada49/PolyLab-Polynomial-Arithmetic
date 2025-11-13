@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Home, LogIn, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -15,6 +15,7 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Close the mobile sheet on route change
   useEffect(() => {
@@ -61,22 +62,25 @@ export default function Navbar() {
 
         {/* Actions (desktop) */}
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/">
-            <Button
-              variant="outline"
-              className="gap-2 border-slate-700 text-slate-200 hover:bg-slate-800/50"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
-          </Link>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2 border-slate-700 text-slate-200 hover:bg-slate-800/50"
+            onClick={() => navigate("/")}
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
 
-          <Link to="/login">
-            <Button variant="outline" className="gap-2 border-slate-700 text-slate-200">
-              <LogIn className="h-4 w-4" />
-              Login
-            </Button>
-          </Link>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2 border-slate-700 text-slate-200"
+            onClick={() => navigate("/login")}
+          >
+            <LogIn className="h-4 w-4" />
+            Login
+          </Button>
         </div>
 
         {/* Mobile menu button */}
@@ -110,25 +114,25 @@ export default function Navbar() {
             ))}
 
             <div className="mt-3 flex flex-col gap-2">
-              <Link to="/">
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 border-slate-700 text-slate-200"
-                >
-                  <Home className="h-4 w-4" />
-                  Home
-                </Button>
-              </Link>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 border-slate-700 text-slate-200"
+                onClick={() => navigate("/")}
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
 
-              <Link to="/login">
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 border-slate-700 text-slate-200"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Login
-                </Button>
-              </Link>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 border-slate-700 text-slate-200"
+                onClick={() => navigate("/login")}
+              >
+                <LogIn className="h-4 w-4" />
+                Login
+              </Button>
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@ import heroImg from "@/assets/polylab-hero.png"; // keep your image path/alias
 import React, { useState } from "react";
 import Navbar from "@/components/ui/Navbar";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { signup, ApiError } from "@/lib/api";
+import { Link } from "react-router-dom";
 
 export default function SignUp() {
   // local UI state only — hook up to your API later
@@ -12,14 +14,47 @@ export default function SignUp() {
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  function validatePassword(pass: string): string | null {
+    if (pass.length < 8) return "Password must be at least 8 characters.";
+    if (pass.length > 256) return "Password must be 256 characters or fewer.";
+    if (!/[A-Z]/.test(pass)) return "Password must include an uppercase letter.";
+    if (!/[a-z]/.test(pass)) return "Password must include a lowercase letter.";
+    if (!/[0-9]/.test(pass)) return "Password must include a number.";
+    if (!/[^A-Za-z0-9]/.test(pass)) return "Password must include a symbol.";
+    return null;
+  }
+
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (pw.length < 8) return setError("Password must be at least 8 characters.");
-    if (pw !== pw2) return setError("Passwords do not match.");
-    // TODO: call /auth/signup, then redirect to email verification.
-    alert("Signed up! (wire to backend)");
+    setSuccess(null);
+
+    const pwErr = validatePassword(pw);
+    if (pwErr) {
+      setError(pwErr);
+      return;
+    }
+    if (pw !== pw2) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signup({ email: email.trim(), password: pw });
+      setSuccess("Account created. Check your inbox for the verification link.");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -151,22 +186,26 @@ export default function SignUp() {
                     Minimum 8 chars. Avoid common or breached passwords.
                   </p>
 
+                  {success && (
+                    <div className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 px-3 py-2 text-sm">
+                      {success}
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 font-semibold hover:from-cyan-400 hover:to-blue-400 transition"
+                    disabled={submitting}
+                    className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 font-semibold hover:from-cyan-400 hover:to-blue-400 transition disabled:opacity-60"
                   >
-                    Sign Up
+                    {submitting ? "Creating account..." : "Sign Up"}
                   </button>
 
-                  <div className="mt-4 border-t border-slate-800 pt-4 text-center text-xs text-slate-400">
-                    Or sign up with
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full mt-2 py-3 rounded-lg border border-slate-700/70 bg-slate-900/30 text-slate-200 flex items-center justify-center gap-2 hover:bg-slate-900/50 transition"
-                  >
-                    <span className="text-lg">G</span> Sign up with Google
-                  </button>
+                  <p className="mt-4 text-sm text-center text-slate-400">
+                    Already have an account?{" "}
+                    <Link to="/login" className="text-cyan-300 hover:text-cyan-200">
+                      Login
+                    </Link>
+                  </p>
                 </form>
               </div>
             </div>

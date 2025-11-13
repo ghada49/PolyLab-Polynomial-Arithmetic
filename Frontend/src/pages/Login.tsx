@@ -1,49 +1,85 @@
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, ShieldCheck, KeyRound } from "lucide-react";
 import Navbar from "@/components/ui/Navbar";
 import heroImg from "@/assets/polylab-hero.png";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { login, ApiError } from "@/lib/api";
 
-type LoginProps = {
-  onLogin?: (email: string, password: string) => Promise<void> | void;
-  onWebAuthn?: () => Promise<void> | void;
-  onVerifyTotp?: (code: string) => Promise<void> | void;
-  formError?: string | null;
-  totpError?: string | null;
-};
-
-export default function Login({
-  onLogin,
-  onWebAuthn,
-  onVerifyTotp,
-  formError,
-  totpError,
-}: LoginProps) {
+export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [totp, setTotp] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [totpError, setTotpError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [totpSubmitting, setTotpSubmitting] = useState(false);
+  const [totpRequired, setTotpRequired] = useState(false);
 
   const emailErrId = "login-email-err";
   const formErrId = "login-form-err";
   const totpErrId = "login-totp-err";
 
-  const pwRef = useRef<HTMLInputElement>(null);
+  const totpInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (onLogin) await onLogin(email.trim(), pw);
+    setFormError(null);
+    setTotpError(null);
+    setTotpRequired(false);
+    setSubmitting(true);
+    try {
+      await login({ email: email.trim(), password: pw });
+      navigate("/student");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const detail =
+          typeof err.data === "object" && err.data
+            ? (err.data as any).detail
+            : null;
+        if (err.status === 401 && detail === "MFA TOTP required") {
+          setTotpRequired(true);
+          setTotpError("Enter your 6-digit code to finish logging in.");
+          requestAnimationFrame(() => totpInputRef.current?.focus());
+        } else {
+          setFormError(err.message);
+        }
+      } else {
+        setFormError("Unable to log you in. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handlePasskey() {
-    if (onWebAuthn) await onWebAuthn();
+    setFormError("Passkeys/WebAuthn integration is coming soon.");
   }
 
   async function handleVerifyTotp(e: React.FormEvent) {
     e.preventDefault();
-    if (onVerifyTotp) await onVerifyTotp(totp.trim());
+    if (!totpRequired) return;
+    if (totp.trim().length < 6) {
+      setTotpError("Enter a valid 6-digit code.");
+      return;
+    }
+    setTotpError(null);
+    setTotpSubmitting(true);
+    try {
+      await login({ email: email.trim(), password: pw, totp: totp.trim() });
+      navigate("/student");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setTotpError(err.message);
+      } else {
+        setTotpError("Unable to verify the code. Please try again.");
+      }
+    } finally {
+      setTotpSubmitting(false);
+    }
   }
 
   return (
@@ -145,7 +181,6 @@ export default function Login({
                     </label>
                     <div className="relative">
                       <Input
-                        ref={pwRef}
                         id="password"
                         type={showPw ? "text" : "password"}
                         value={pw}
@@ -179,12 +214,13 @@ export default function Login({
 
                   <Button
                     type="submit"
+                    disabled={submitting}
                     className="mt-5 w-full h-11 gap-2 bg-gradient-to-r from-blue-600 to-cyan-500
-                               text-slate-900 font-semibold hover:brightness-110
+                               text-slate-900 font-semibold hover:brightness-110 disabled:opacity-60
                                focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
                   >
                     <LogIn className="h-5 w-5" />
-                    Login
+                    {submitting ? "Signing in..." : "Login"}
                   </Button>
                 </form>
 
@@ -208,45 +244,49 @@ export default function Login({
                 </div>
 
                 {/* MFA TOTP (optional) */}
-                <form onSubmit={handleVerifyTotp} className="mt-5">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                    <div className="flex items-center gap-2 text-slate-300 mb-2">
-                      <ShieldCheck className="h-5 w-5 text-cyan-400" />
-                      <span className="font-medium">MFA Challenge</span>
-                    </div>
+                {totpRequired && (
+                  <form onSubmit={handleVerifyTotp} className="mt-5">
+                    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+                      <div className="flex items-center gap-2 text-slate-300 mb-2">
+                        <ShieldCheck className="h-5 w-5 text-cyan-400" />
+                        <span className="font-medium">MFA Challenge</span>
+                      </div>
 
-                    {totpError ? (
-                      <p
-                        id={totpErrId}
-                        role="alert"
-                        className="mb-2 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 px-3 py-2 text-sm"
+                      {totpError ? (
+                        <p
+                          id={totpErrId}
+                          role="alert"
+                          className="mb-2 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 px-3 py-2 text-sm"
+                        >
+                          {totpError}
+                        </p>
+                      ) : null}
+
+                      <label className="block text-sm text-slate-300 mb-1">
+                        TOTP Code
+                      </label>
+                      <Input
+                        ref={totpInputRef}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={totp}
+                        onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                        placeholder="123456"
+                        aria-describedby={totpError ? totpErrId : undefined}
+                        className="h-11 bg-slate-900/70 border-slate-700/70 placeholder:text-slate-400"
+                      />
+
+                      <Button
+                        type="submit"
+                        disabled={totpSubmitting}
+                        className="mt-3 w-full h-10 bg-cyan-500 text-slate-900 hover:bg-cyan-400 disabled:opacity-60
+                                   focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
                       >
-                        {totpError}
-                      </p>
-                    ) : null}
-
-                    <label className="block text-sm text-slate-300 mb-1">
-                      TOTP Code
-                    </label>
-                    <Input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={totp}
-                      onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                      placeholder="123456"
-                      aria-describedby={totpError ? totpErrId : undefined}
-                      className="h-11 bg-slate-900/70 border-slate-700/70 placeholder:text-slate-400"
-                    />
-
-                    <Button
-                      type="submit"
-                      className="mt-3 w-full h-10 bg-cyan-500 text-slate-900 hover:bg-cyan-400
-                                 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      Verify
-                    </Button>
-                  </div>
-                </form>
+                        {totpSubmitting ? "Verifying..." : "Verify"}
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import Navbar from "@/components/ui/Navbar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import bgCircuit from "@/assets/background.png"; // your background image
+import bgCircuit from "@/assets/background.png";
+import { requestPasswordReset, ApiError } from "@/lib/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -19,13 +20,23 @@ export default function ForgotPassword() {
     }
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800)); // mock
-    setLoading(false);
-
-    setBanner({
-      type: "success",
-      msg: "If an account exists for that email, a reset link has been sent.",
-    });
+    try {
+      await requestPasswordReset(email.trim());
+      setBanner({
+        type: "success",
+        msg: "If an account exists for that email, a reset link has been sent.",
+      });
+    } catch (err) {
+      setBanner({
+        type: "error",
+        msg:
+          err instanceof ApiError
+            ? err.message
+            : "We were unable to process your request. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
