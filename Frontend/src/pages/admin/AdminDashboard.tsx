@@ -1,8 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import NavBarUser from "@/components/ui/NavBarUser";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ApiError, AUTH_BASE_URL, listInstructorRequests, decideInstructorRequest } from "@/lib/api";
+import {
+  ApiError,
+  AUTH_BASE_URL,
+  listInstructorRequests,
+  decideInstructorRequest,
+  InstructorRequest as ApiInstructorRequest,
+} from "@/lib/api";
 import {
   CheckCircle2,
   Clock4,
@@ -10,41 +15,18 @@ import {
   Users2,
   XCircle,
   ExternalLink,
-  Search,
-  UserCog,
   ArrowUpRight,
 } from "lucide-react";
 import bgCircuit from "@/assets/background.png"; // background image
 
 // ----------------------------- Types -----------------------------
-type RequestStatus = "pending" | "approved" | "rejected";
-
-type InstructorRequest = {
-  id: number;
-  status: RequestStatus;
-  note?: string | null;
-  file_path: string;
-  user_id: number;
-  user_email?: string | null;
-  created_at: string;
+type AdminInstructorRequest = ApiInstructorRequest & {
+  created_at?: string;
   decision_by?: number | null;
   decided_at?: string | null;
+  user_email?: string | null;
 };
 
-type UserRow = {
-  id: string;
-  email: string;
-  role: "student" | "instructor" | "admin";
-  status: "active" | "disabled" | "pending";
-};
-
-// ---------------------------- Mock Users --------------------------
-const seedUsers: UserRow[] = [
-  { id: "u_1", email: "mk102@mail.aub.edu", role: "student", status: "active" },
-  { id: "u_2", email: "prof.hussein@aub.edu.lb", role: "instructor", status: "active" },
-  { id: "u_3", email: "admin@polylab.app", role: "admin", status: "active" },
-  { id: "u_4", email: "ks33@mail.aub.edu", role: "student", status: "pending" },
-];
 
 // --------------------------- Small UI Bits ------------------------
 function Badge({
@@ -108,8 +90,7 @@ function Toast({
 
 // ----------------------------- Page ------------------------------
 export default function AdminDashboard() {
-  const [requests, setRequests] = useState<InstructorRequest[]>([]);
-  const [users, setUsers] = useState<UserRow[]>(seedUsers);
+  const [requests, setRequests] = useState<AdminInstructorRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [reqError, setReqError] = useState<string | null>(null);
 
@@ -119,13 +100,6 @@ export default function AdminDashboard() {
     title: string;
     description?: string;
   }>({ open: false, tone: "success", title: "" });
-
-  const [userQuery, setUserQuery] = useState("");
-  const filteredUsers = useMemo(() => {
-    const q = userQuery.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter((u) => u.email.toLowerCase().includes(q));
-  }, [userQuery, users]);
 
   useEffect(() => {
     async function load() {
@@ -158,14 +132,6 @@ export default function AdminDashboard() {
     try {
       await decideInstructorRequest(id, "approve");
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "approved" } : r)));
-      const req = requests.find((r) => r.id === id);
-      if (req) {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.email === req.user_email ? { ...u, role: "instructor", status: "active" } : u
-          )
-        );
-      }
       setToast({
         open: true,
         tone: "success",
@@ -192,26 +158,6 @@ export default function AdminDashboard() {
       const msg = e instanceof ApiError ? e.message : "Failed to reject";
       setToast({ open: true, tone: "error", title: "Error", description: msg });
     }
-  }
-
-  function changeUserRole(id: string, role: UserRow["role"]) {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
-    setToast({
-      open: true,
-      tone: "success",
-      title: "Role updated",
-      description: `User is now ${role}.`,
-    });
-  }
-
-  function changeUserStatus(id: string, status: UserRow["status"]) {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
-    setToast({
-      open: true,
-      tone: "success",
-      title: "Status updated",
-      description: `User status is now ${status}.`,
-    });
   }
 
   return (
@@ -360,144 +306,7 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            {/* User Management (mock) */}
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <UserCog className="h-5 w-5 text-cyan-400" />
-                  User Management
-                </h2>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="h-4 w-4 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                    <Input
-                      value={userQuery}
-                      onChange={(e) => setUserQuery(e.target.value)}
-                      placeholder="Search email…"
-                      className="pl-8 h-9 bg-slate-900/70 border-slate-700/70"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
-                <table className="min-w-full divide-y divide-slate-800 text-sm">
-                  <thead className="bg-slate-900/60">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-300">
-                        Email
-                      </th>
-                      <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-300">
-                        Role
-                      </th>
-                      <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-300">
-                        Status
-                      </th>
-                      <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-300">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {filteredUsers.map((u) => (
-                      <tr key={u.id} className="bg-slate-900/40">
-                        <td className="px-4 py-3 text-slate-200">{u.email}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              tone={
-                                u.role === "admin"
-                                  ? "indigo"
-                                  : u.role === "instructor"
-                                  ? "cyan"
-                                  : "slate"
-                              }
-                            >
-                              {u.role[0].toUpperCase() + u.role.slice(1)}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <button
-                                className="text-xs underline text-slate-300 hover:text-white"
-                                onClick={() => changeUserRole(u.id, "student")}
-                              >
-                                Student
-                              </button>
-                              <span className="text-slate-600">·</span>
-                              <button
-                                className="text-xs underline text-slate-300 hover:text-white"
-                                onClick={() => changeUserRole(u.id, "instructor")}
-                              >
-                                Instructor
-                              </button>
-                              <span className="text-slate-600">·</span>
-                              <button
-                                className="text-xs underline text-slate-300 hover:text-white"
-                                onClick={() => changeUserRole(u.id, "admin")}
-                              >
-                                Admin
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              tone={
-                                u.status === "active"
-                                  ? "green"
-                                  : u.status === "pending"
-                                  ? "amber"
-                                  : "rose"
-                              }
-                            >
-                              {u.status[0].toUpperCase() + u.status.slice(1)}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <button
-                                className="text-xs underline text-slate-300 hover:text-white"
-                                onClick={() => changeUserStatus(u.id, "active")}
-                              >
-                                Activate
-                              </button>
-                              <span className="text-slate-600">·</span>
-                              <button
-                                className="text-xs underline text-slate-300 hover:text-white"
-                                onClick={() => changeUserStatus(u.id, "disabled")}
-                              >
-                                Disable
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            variant="outline"
-                            className="h-8 px-3 border-slate-700 text-slate-200"
-                            onClick={() =>
-                              setToast({
-                                open: true,
-                                tone: "success",
-                                title: "Opened user",
-                                description: "This is a mock action in MVP.",
-                              })
-                            }
-                          >
-                            Open
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredUsers.length === 0 && (
-                      <tr>
-                        <td className="px-4 py-6 text-slate-400" colSpan={4}>
-                          No users match your search.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
           </div>
         </main>
       </div>

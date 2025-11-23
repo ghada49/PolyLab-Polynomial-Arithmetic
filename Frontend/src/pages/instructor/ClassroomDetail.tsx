@@ -27,9 +27,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Upload, FileText, Inbox, Clock3, Download, ExternalLink } from "lucide-react";
 import bgCircuit from "@/assets/background.png"; // your background image
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ClassroomDetail() {
   const { classId } = useParams();
+  const { user } = useAuth();
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [templates, setTemplates] = useState<AssignmentTemplate[]>([]);
@@ -120,7 +122,7 @@ export default function ClassroomDetail() {
         <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
         <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
         <div className="relative z-10">
-          <NavBarUser onLogout={() => console.log("logout")} />
+          <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
           <main className="mx-auto max-w-3xl px-4 py-10">
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">Loading classroom...</div>
           </main>
@@ -135,7 +137,7 @@ export default function ClassroomDetail() {
         <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
         <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
         <div className="relative z-10">
-          <NavBarUser onLogout={() => console.log("logout")} />
+          <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
           <main className="mx-auto max-w-3xl px-4 py-10">
             <div className="rounded-xl border border-rose-700/40 bg-rose-900/20 p-6">Classroom not found.</div>
           </main>
@@ -149,7 +151,7 @@ export default function ClassroomDetail() {
       <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
       <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
       <div className="relative z-10">
-        <NavBarUser onLogout={() => console.log("logout")} />
+        <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
         <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
           <PageHeader
             title={classroom.name}

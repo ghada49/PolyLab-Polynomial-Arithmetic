@@ -8,6 +8,7 @@ import CopyButton from "@/components/ui/CopyButton";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, Users } from "lucide-react";
 import bgCircuit from "@/assets/background.png"; // your background image
+import { useAuth } from "@/contexts/AuthContext";
 
 function useQuery() {
   const { search } = useLocation();
@@ -16,6 +17,7 @@ function useQuery() {
 
 export default function ClassroomsList() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const q = useQuery();
   const [showCreate, setShowCreate] = React.useState(q.get("create") === "1");
   const [search, setSearch] = React.useState("");
@@ -63,7 +65,7 @@ export default function ClassroomsList() {
       {/* dark overlay */}
       <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
       <div className="relative z-10">
-        <NavBarUser onLogout={() => console.log("logout")} />
+        <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
         <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
           <PageHeader
             title="My Classrooms"

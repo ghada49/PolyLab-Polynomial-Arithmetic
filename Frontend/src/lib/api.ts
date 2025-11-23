@@ -263,6 +263,11 @@ export type InstructorRequest = {
   status: "pending" | "approved" | "rejected";
   note: string | null;
   file_path: string;
+  // Admin-facing fields may be present on GET /admin/roles/requests and GET /admin/roles/requests/{id}
+  created_at?: string;
+  decision_by?: number | null;
+  decided_at?: string | null;
+  user_email?: string | null;
 };
 
 export async function signup(body: SignupPayload): Promise<BasicOk> {

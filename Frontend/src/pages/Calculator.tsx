@@ -1,6 +1,8 @@
 // src/pages/Calculator.tsx
 import React, { useMemo, useState } from "react";
 import NavbarUser from "@/components/ui/NavBarUser";
+import StudentNavbar from "@/components/ui/StudentNavbar";
+import Navbar from "@/components/ui/Navbar";
 import { IRRED_DEFAULTS, asPolyString, hex } from "@/lib/irreducibles";
 import { gfAdd, gfMul, gfPow, gfInv, gfMod, type GFConfig, type Step } from "@/lib/gf2m";
 import { Input } from "@/components/ui/input";
@@ -8,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // if you have shadcn tabs; otherwise replace
 import { Calculator, History, Layers, NotepadText } from "lucide-react";
 import bgCircuit from "@/assets/background.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Op = "add" | "sub" | "mul" | "div" | "inv" | "pow" | "mod";
 
@@ -46,6 +49,7 @@ function useHistory() {
 }
 
 export default function CalculatorPage() {
+  const { user } = useAuth();
   const [m, setM] = useState<number>(8);
   const [modPoly, setModPoly] = useState<number>(IRRED_DEFAULTS[8]);
   const [op, setOp] = useState<Op>("mul");
@@ -127,6 +131,12 @@ export default function CalculatorPage() {
     setModPoly(IRRED_DEFAULTS[next] ?? modPoly);
   }
 
+  const navbar = user
+    ? user.role === "student"
+      ? <StudentNavbar />
+      : <NavbarUser email={user.email} role={user.role} />
+    : <Navbar />;
+
   return (
         <div className="relative min-h-screen text-slate-100">
       {/* Background image */}
@@ -138,7 +148,7 @@ export default function CalculatorPage() {
       {/* Dark overlay so content is readable (optional) */}
       <div className="absolute inset-0 bg-slate-950/65" />
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <NavbarUser onLogout={() => console.log("logout")}/>
+      {navbar}
 
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid gap-8 lg:grid-cols-2">

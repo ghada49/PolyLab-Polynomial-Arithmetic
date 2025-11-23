@@ -17,6 +17,7 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRequestDetail from "./pages/admin/AdminRequestDetail";
 import PageGallery from "./pages/PageGallery";
+import ResetConfirm from "./pages/ResetConfirm";
 import { DocsPage, ExamplesPage, SecurityPage, TutorialsPage } from "./pages/InfoPages";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/verify" element={<VerifyEmail />} />
           <Route path="/forgot" element={<ForgotPassword />} />
+          <Route path="/reset/confirm" element={<ResetConfirm />} />
           <Route path="/pages" element={<PageGallery />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/tutorials" element={<TutorialsPage />} />
@@ -53,7 +55,7 @@ export default function App() {
           <Route
             path="/student"
             element={
-              <RoleRoute allow={["student", "instructor", "admin"]}>
+              <RoleRoute allow={["student"]}>
                 <StudentDashboard />
               </RoleRoute>
             }
@@ -61,7 +63,7 @@ export default function App() {
           <Route
             path="/student/classrooms/:classId"
             element={
-              <RoleRoute allow={["student", "instructor", "admin"]}>
+              <RoleRoute allow={["student"]}>
                 <StudentClassroom />
               </RoleRoute>
             }
@@ -69,7 +71,7 @@ export default function App() {
           <Route
             path="/instructor/request"
             element={
-              <RoleRoute allow={["student", "instructor", "admin"]}>
+              <RoleRoute allow={["student"]}>
                 <RequestInstructor />
               </RoleRoute>
             }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ApiError, Assignment, Submission, AUTH_BASE_URL, getAssignment, listSubmissionsForAssignment, gradeSubmission } from "@/lib/api";
 import { Clock3, ExternalLink } from "lucide-react";
 import bgCircuit from "@/assets/background.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 function relativeTime(iso: string): string {
   const now = Date.now();
@@ -26,6 +27,7 @@ function relativeTime(iso: string): string {
 export default function AssignmentDetail() {
   const { assignmentId } = useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [subs, setSubs] = useState<Submission[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +38,13 @@ export default function AssignmentDetail() {
     setLoading(true);
     setError(null);
     try {
-      const a = await getAssignment(assignmentId);
+      const idNum = Number(assignmentId);
+      if (Number.isNaN(idNum)) {
+        throw new Error("Invalid assignment id");
+      }
+      const a = await getAssignment(idNum);
       setAssignment(a);
-      const s = await listSubmissionsForAssignment(assignmentId);
+      const s = await listSubmissionsForAssignment(idNum);
       setSubs(s);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : "Failed to load assignment";
@@ -58,7 +64,7 @@ export default function AssignmentDetail() {
         <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
         <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
         <div className="relative z-10">
-          <NavBarUser onLogout={() => console.log("logout")} />
+          <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
           <main className="mx-auto max-w-4xl px-4 py-10">
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">Loading...</div>
           </main>
@@ -73,12 +79,16 @@ export default function AssignmentDetail() {
         <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
         <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
         <div className="relative z-10">
-          <NavBarUser onLogout={() => console.log("logout")} />
+          <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
           <main className="mx-auto max-w-4xl px-4 py-10">
             <div className="rounded-xl border border-rose-700/40 bg-rose-900/20 p-6">
               {error ?? "Assignment not found."}
             </div>
-            <Button variant="outline" className="mt-4 border-slate-700 text-slate-200" onClick={() => nav(-1)}>
+            <Button
+              variant="outline"
+              className="mt-4 border-slate-700 text-slate-200"
+              onClick={() => nav("/instructor/classrooms")}
+            >
               Back
             </Button>
           </main>
@@ -92,7 +102,7 @@ export default function AssignmentDetail() {
       <div className="absolute inset-0 bg-cover bg-center bg-fixed pointer-events-none" style={{ backgroundImage: `url(${bgCircuit})` }} />
       <div className="absolute inset-0 bg-slate-950/75 pointer-events-none" />
       <div className="relative z-10">
-        <NavBarUser onLogout={() => console.log("logout")} />
+        <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
         <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-10 space-y-6">
           <PageHeader title={`Asg ${assignment.id}: ${assignment.title}`} subtitle={`Classroom ID: ${assignment.classroom_id}`} />
 
@@ -133,7 +143,11 @@ export default function AssignmentDetail() {
           </div>
 
           <div>
-            <Button variant="outline" className="border-slate-700 text-slate-200" onClick={() => nav(-1)}>
+            <Button
+              variant="outline"
+              className="border-slate-700 text-slate-200"
+              onClick={() => nav("/instructor/classrooms")}
+            >
               Back
             </Button>
           </div>

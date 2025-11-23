@@ -3,13 +3,26 @@ import { useParams, useNavigate } from "react-router-dom";
 import NavBarUser from "@/components/ui/NavBarUser";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ApiError, AUTH_BASE_URL, getInstructorRequest, decideInstructorRequest, InstructorRequest } from "@/lib/api";
+import {
+  ApiError,
+  AUTH_BASE_URL,
+  getInstructorRequest,
+  decideInstructorRequest,
+  InstructorRequest as ApiInstructorRequest,
+} from "@/lib/api";
 import bgCircuit from "@/assets/background.png";
 
+type AdminInstructorRequest = ApiInstructorRequest & {
+  user_email?: string | null;
+  created_at?: string;
+  decision_by?: number | null;
+  decided_at?: string | null;
+};
+
 export default function AdminRequestDetail() {
-  const { requestId } = useParams();
-  const nav = useNavigate();
-  const [req, setReq] = useState<InstructorRequest | null>(null);
+const { requestId } = useParams();
+const nav = useNavigate();
+const [req, setReq] = useState<AdminInstructorRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -19,7 +32,7 @@ export default function AdminRequestDetail() {
       setError(null);
       try {
         const data = await getInstructorRequest(Number(requestId));
-        setReq(data);
+        setReq(data as AdminInstructorRequest);
       } catch (e) {
         const msg = e instanceof ApiError ? e.message : "Failed to load request";
         setError(msg);
@@ -61,9 +74,9 @@ export default function AdminRequestDetail() {
               <InfoRow label="User" value={req.user_email ? `${req.user_email} (id ${req.user_id})` : `User #${req.user_id}`} />
               <InfoRow label="Status" value={req.status} />
               <InfoRow label="Note" value={req.note || "—"} />
-              <InfoRow label="Submitted at" value={new Date(req.created_at).toLocaleString()} />
-              <InfoRow label="Decision by" value={req.decision_by ? String(req.decision_by) : "—"} />
-              <InfoRow label="Decided at" value={req.decided_at ? new Date(req.decided_at).toLocaleString() : "—"} />
+              <InfoRow label="Submitted at" value={req.created_at ? new Date(req.created_at).toLocaleString() : "-"} />
+              <InfoRow label="Decision by" value={req.decision_by ? String(req.decision_by) : "-"} />
+              <InfoRow label="Decided at" value={req.decided_at ? new Date(req.decided_at).toLocaleString() : "-"} />
               {req.file_path && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-slate-300">Proof:</span>
@@ -93,7 +106,7 @@ export default function AdminRequestDetail() {
                 >
                   Reject
                 </Button>
-                <Button variant="ghost" className="text-slate-200" onClick={() => nav(-1)}>
+                <Button variant="ghost" className="text-slate-200" onClick={() => nav("/admin")}>
                   Back
                 </Button>
               </div>

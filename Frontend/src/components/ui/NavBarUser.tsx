@@ -1,21 +1,39 @@
 // src/components/Navbar.tsx
 import React from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut, Home } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Role = "student" | "instructor" | "admin";
 
 type NavbarProps = {
   email?: string;
   role?: Role;
-  onLogout?: () => void;
+  onLogout?: () => void | Promise<void>;
 };
 
 export default function Navbar({ email, role = "student", onLogout }: NavbarProps) {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      if (onLogout) {
+        await Promise.resolve(onLogout());
+      }
+      navigate("/login", { replace: true });
+    }
+  };
+
   // dynamic tabs based on role
   const baseTabs = [
-          { to: "/calculator", label: "Calculator" },
+    { to: "/calculator", label: "Calculator" },
     { to: "/docs", label: "Docs" },
+    { to: "/tutorials", label: "Tutorials" },
   ];
 
 
@@ -26,10 +44,20 @@ export default function Navbar({ email, role = "student", onLogout }: NavbarProp
       <div className="mx-auto h-14 w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 grid place-items-center text-slate-900 font-black">
-            P
-          </div>
-          <span className="font-semibold tracking-tight">PolyLab</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (role === "admin") navigate("/admin");
+              else if (role === "instructor") navigate("/instructor");
+              else navigate("/student");
+            }}
+            className="flex items-center gap-2"
+          >
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 grid place-items-center text-slate-900 font-black">
+              P
+            </div>
+            <span className="font-semibold tracking-tight">PolyLab</span>
+          </button>
         </Link>
 
         {/* Center nav */}
@@ -72,7 +100,7 @@ export default function Navbar({ email, role = "student", onLogout }: NavbarProp
           </Link>
 
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             className="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-1.5 text-slate-200 hover:bg-slate-800/60"
             title="Logout"
           >

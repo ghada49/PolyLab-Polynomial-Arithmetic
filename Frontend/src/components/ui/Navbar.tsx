@@ -4,6 +4,7 @@ import { Home, LogIn, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const links = [
   { to: "/docs", label: "Docs" },
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Close the mobile sheet on route change
   useEffect(() => {
@@ -33,12 +35,21 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/60 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
       <div className="mx-auto w-full max-w-screen-2xl h-16 px-4 sm:px-5 md:px-6 lg:px-8 xl:px-10 2xl:px-12 flex items-center justify-between">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (user?.role === "admin") navigate("/admin");
+            else if (user?.role === "instructor") navigate("/instructor");
+            else if (user?.role === "student") navigate("/student");
+            else navigate("/");
+          }}
+          className="flex items-center gap-3 focus:outline-none"
+        >
           <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 grid place-items-center shadow">
             <span className="font-bold text-slate-900">P</span>
           </div>
           <span className="font-semibold tracking-tight text-lg">PolyLab</span>
-        </Link>
+        </button>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6 text-slate-300">

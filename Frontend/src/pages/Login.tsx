@@ -252,6 +252,12 @@ export default function Login() {
                     Sign Up
                   </Link>
                 </div>
+                <div className="mt-4 flex items-center justify-between text-sm text-slate-400">
+                  <span>Forgot your passworkd?</span>
+                  <Link to="/forgot" className="text-cyan-300 hover:text-cyan-200">
+                    Reset Password
+                  </Link>
+                </div>
 
                 {/* MFA TOTP (optional) */}
                 {totpRequired && (

@@ -69,7 +69,7 @@ export default function InstructorDashboard() {
       {/* dark overlay */}
       <div className="absolute inset-0 bg-slate-950/75" />
 
-      <NavBarUser onLogout={() => console.log("logout")} />
+      <NavBarUser email={user?.email} role={user?.role ?? "instructor"} />
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10 relative z-10">
         <PageHeader
           title="Instructor Dashboard"
