@@ -43,22 +43,20 @@ export default function Navbar({ email, role = "student", onLogout }: NavbarProp
     <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/70 backdrop-blur">
       <div className="mx-auto h-14 w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (role === "admin") navigate("/admin");
-              else if (role === "instructor") navigate("/instructor");
-              else navigate("/student");
-            }}
-            className="flex items-center gap-2"
-          >
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 grid place-items-center text-slate-900 font-black">
-              P
-            </div>
-            <span className="font-semibold tracking-tight">PolyLab</span>
-          </button>
-        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (role === "admin") navigate("/admin");
+            else if (role === "instructor") navigate("/instructor");
+            else navigate("/student");
+          }}
+          className="flex items-center gap-2"
+        >
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 grid place-items-center text-slate-900 font-black">
+            P
+          </div>
+          <span className="font-semibold tracking-tight">PolyLab</span>
+        </button>
 
         {/* Center nav */}
         <nav className="hidden md:flex items-center gap-5 text-slate-300">
