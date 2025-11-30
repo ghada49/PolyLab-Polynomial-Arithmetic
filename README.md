@@ -66,8 +66,6 @@ Includes a full finite-field arithmetic engine for:
 - Context-based authentication state  
 
 ### Deployment
-- Fully Dockerized (Backend + Frontend)  
-- Multi-stage Dockerfile  
 - Deployment on **Render** with:
   - Auto builds  
   - Environment variables  
